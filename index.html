@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Playground JS</title>
+    <link rel="stylesheet" href="">
+    <style>
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+    }
+    </style>
+  </head>
+
+  <body>
+
+    <canvas id="display"></canvas>
+
+    <script>
+    var iterator = 0;
+    var colors = ['red', 'blue', 'green'];
+
+    var GRAVITY = .4;
+    var BOUNCELIMIT = 14;
+
+    function Particle(x, y) {
+      this.x = this.oldx = x;
+      this.y = this.oldy = y;
+      this.bounceCount = 0;
+      return this;
+    }
+
+    Particle.prototype.draw = function() {
+      if (iterator > 2) iterator = 0;
+      ctx.strokeStyle = colors[iterator];
+      iterator++;
+
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(this.oldx, this.oldy);
+      ctx.lineTo(this.x, this.y);
+      ctx.stroke();
+    }
+
+    Particle.prototype.integrate = function() {
+      var velx = this.x - this.oldx;
+      var vely = this.y - this.oldy;
+
+      this.oldx = this.x
+      this.oldy = this.y
+
+      this.x += velx;
+      this.y += vely;
+    }
+
+    Particle.prototype.attract = function(x, y) {
+      dx = x - this.x
+      dy = y - this.y
+
+      var distance = Math.sqrt(dx * dx + dy * dy);
+
+      this.x += dx / distance;
+      this.y += dy / distance;
+    }
+
+    Particle.prototype.move = function(x, y) {
+      this.x += x;
+      this.y += y;
+    }
+
+    Particle.prototype.bounce = function() {
+      if (this.y < h) return;
+      if (this.bounceCount > BOUNCELIMIT) {
+        this.resetParticle();
+      } else {
+        this.oldy = h;
+        var vel = this.getVelocity();
+        this.y = this.oldy - vel.y * .8;
+        this.bounceCount++;
+      }
+    }
+
+    Particle.prototype.getVelocity = function() {
+      return {
+        x: this.x - this.oldx,
+        y: this.y - this.oldy
+      };
+    }
+
+    Particle.prototype.resetParticle = function() {
+      this.x = this.oldx = w * .5;
+      this.y = this.oldy = h;
+      this.move(Math.random() * 4 - 2, Math.random() * -2 - 18);
+      this.bounceCount = 0
+    }
+
+    var particles = [];
+    var h = window.innerHeight;
+    var w = window.innerWidth;
+    var disp = document.getElementById('display');
+    var ctx = disp.getContext('2d');
+    var mouse = {
+      x: w / 2,
+      y: h / 2
+    };
+
+    disp.width = w;
+    disp.height = h;
+    disp.style.background = '#000';
+
+    for (var i = 10; i >= 0; i--) {
+      particles[i] = new Particle(w * .5, h);
+    }
+
+    // disp.addEventListener('mousemove', function(e) {
+    //   mouse.x = e.clientX;
+    //   mouse.y = e.clientY;
+    // });
+
+    requestAnimationFrame(frame);
+
+    function frame() {
+      requestAnimationFrame(frame);
+      ctx.clearRect(0, 0, disp.width, disp.height);
+      if (particles.length < 1000) {
+        for (var i = 5; i >= 0; i--) {
+          if (particles.length < 1000) {
+            var particle = new Particle(w * .5, h);
+            particle.move(Math.random() * 4 - 2, Math.random() * -2 - 18)
+            particles.push(particle);
+          }
+        };
+      }
+
+      particles.map(function(p) {
+        var vel = p.getVelocity();
+        if (vel.y === 0) {
+          p.x = p.oldx = w / 2;
+          p.y = p.oldy = h;
+          p.move(Math.random() * 4 - 2, Math.random() * -2 - 18);
+        } else {
+          p.move(0, GRAVITY);
+        }
+
+        p.integrate();
+        p.bounce();
+        p.draw();
+      })
+    }
+    </script>
+  </body>
+
+</html>
